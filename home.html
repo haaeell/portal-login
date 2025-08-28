@@ -144,9 +144,6 @@
             const baseUrl = $(this).data("url");
             $("#loadingOverlay").show();
 
-            console.log("POST ke:", baseUrl);
-            console.log("Data yang dikirim:", { email: auth, password: password });
-
             const form = document.createElement("form");
             form.method = "POST";
             form.action = baseUrl;
