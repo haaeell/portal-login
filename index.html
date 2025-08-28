@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Multi App Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="logo.png" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        body {
+            height: 100vh;
+        }
+
+        .card {
+            border-radius: 16px;
+        }
+
+        /* Toast tengah atas */
+        #liveToastContainer {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+        }
+    </style>
+</head>
+
+<body class="bg-light d-flex align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-4">
+                <div class="card shadow-lg">
+                    <div class="card-body p-4">
+
+                        <div class="text-center mb-3">
+                            <img src="logo.png" alt="Logo" class="img-fluid"
+                                style="max-height:64px; object-fit:contain;" />
+                        </div>
+
+                        <h4 class="text-center mb-3">Login</h4>
+
+                        <form id="loginForm" novalidate>
+                            <div class="mb-3">
+                                <label for="auth" class="form-label">Email <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                    <input type="email" class="form-control" id="auth" name="auth" required />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password <span
+                                        class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                    <input type="password" class="form-control" id="password" name="password"
+                                        required />
+                                    <button type="button" class="btn btn-outline-secondary" id="togglePass"
+                                        tabindex="-1">
+                                        <i class="bi bi-eye-slash" id="eyeIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" id="btnSubmit" class="btn btn-success p-2">
+                                    <span class="btn-text"><i class="bi bi-box-arrow-in-right me-1"></i> Masuk</span>
+                                    <span class="btn-loading d-none">
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"
+                                            aria-hidden="true"></span>
+                                        Memproses...
+                                    </span>
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="liveToastContainer">
+        <div id="liveToast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive"
+            aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage">Terjadi kesalahan!</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const toastEl = document.getElementById('liveToast');
+        const toast = new bootstrap.Toast(toastEl);
+        const $btn = $("#btnSubmit");
+        const $btnText = $btn.find(".btn-text");
+        const $btnLoading = $btn.find(".btn-loading");
+
+        $("#togglePass").on("click", function () {
+            const $pwd = $("#password");
+            const isText = $pwd.attr("type") === "text";
+            $pwd.attr("type", isText ? "password" : "text");
+            $("#eyeIcon").toggleClass("bi-eye bi-eye-slash");
+        });
+
+        function showToast(msg) {
+            $("#toastMessage").text(msg || "Terjadi kesalahan!");
+            toast.show();
+        }
+
+        function setLoading(state) {
+            $btn.prop("disabled", state);
+            $btnText.toggleClass("d-none", state);
+            $btnLoading.toggleClass("d-none", !state);
+        }
+
+        function encryptData(value) {
+            return CryptoJS.AES.encrypt(value, secretKey).toString();
+        }
+
+        $("#loginForm").on("submit", function (e) {
+            e.preventDefault();
+
+            const auth = $("#auth").val().trim();
+            const password = $("#password").val();
+
+            if (!auth || !password) {
+                showToast("Email/No. HP dan Password wajib diisi.");
+                return;
+            }
+
+            setLoading(true);
+
+            $.ajax({
+                url: "http://109.123.239.152:8066/v1/auth/login",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ auth: auth, password: password }),
+                success: function (result) {
+                    const accessToken = result.data?.token;
+                    if (!accessToken) {
+                        showToast("Token tidak ditemukan dari server!");
+                        setLoading(false);
+                        return;
+                    }
+
+                    localStorage.setItem("access_token", accessToken);
+                    localStorage.setItem("auth", btoa(auth));
+                    localStorage.setItem("password", btoa(password));
+
+                    window.location.href = "home.html";
+                },
+                error: function (xhr) {
+                    let msg = "Terjadi kesalahan!";
+                    if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+                    else if (xhr.status === 0) msg = "Tidak bisa terhubung ke server. Cek koneksi/CORS.";
+                    showToast(msg);
+                    setLoading(false);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

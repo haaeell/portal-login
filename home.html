@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard - Multi App Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .app-card .card-body {
+            padding: 2rem;
+        }
+
+        .app-card i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .app-card h5 {
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1200px;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .app-card i {
+                font-size: 2.5rem;
+            }
+
+            .app-card .card-body {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="logo.png" style="width: 40px;" alt="">
+            </a>
+            <button class="btn btn-success" id="logoutBtn">
+                <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </button>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <h3 class="mb-4 fw-bold text-dark">Pilih Aplikasi</h3>
+        <div class="row g-4">
+            <div class="col-md-4 col-sm-6">
+                <div class="card shadow-lg h-100 app-card" data-url="https://marketing.marisonregency.id/login">
+                    <div class="card-body text-center">
+                        <i class="bi bi-megaphone-fill text-success"></i>
+                        <h5 class="mt-2">Marketing</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="card shadow-lg h-100 app-card" data-url="https://perencanaan.marisonregency.id/login">
+                    <div class="card-body text-center">
+                        <i class="bi bi-diagram-3-fill text-primary"></i>
+                        <h5 class="mt-2">Perencanaan</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="card shadow-lg h-100 app-card" data-url="https://ga.marisonregency.id/login">
+                    <div class="card-body text-center">
+                        <i class="bi bi-building-fill text-warning"></i>
+                        <h5 class="mt-2">GA</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <span class="ms-3">Memuat aplikasi...</span>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("access_token");
+        const auth = atob(localStorage.getItem("auth"));
+        const password = atob(localStorage.getItem("password"));
+
+        if (!token || !auth || !password) {
+            alert("Kredensial tidak lengkap. Silakan login kembali.");
+            window.location.href = "/index.html";
+        }
+
+        $(".app-card").on("click", function () {
+            const baseUrl = $(this).data("url");
+            $("#loadingOverlay").show();
+
+            console.log("POST ke:", baseUrl);
+            console.log("Data yang dikirim:", { email: auth, password: password });
+
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = baseUrl;
+            form.target = "_blank";
+
+            const emailInput = document.createElement("input");
+            emailInput.type = "hidden";
+            emailInput.name = "email";
+            emailInput.value = auth;
+            form.appendChild(emailInput);
+
+            const passwordInput = document.createElement("input");
+            passwordInput.type = "hidden";
+            passwordInput.name = "password";
+            passwordInput.value = password;
+            form.appendChild(passwordInput);
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+
+            setTimeout(() => $("#loadingOverlay").hide(), 2000);
+        });
+
+        // Logout
+        $("#logoutBtn").on("click", function () {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("auth");
+            localStorage.removeItem("password");
+            window.location.href = "/index.html";
+        });
+    </script>
+</body>
+
+</html>
